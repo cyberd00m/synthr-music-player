@@ -43,19 +43,19 @@ struct LibraryView: View {
                     }
                 } else if dataManager.albums.isEmpty && dataManager.artists.isEmpty {
                     if selectedTab == 0 {
-                        EmptyAlbumsView()
+                        EmptyPlaylistsView()
                     } else {
-                        EmptyArtistsView()
+                        EmptyLibraryView()
                     }
                 } else {
                     if selectedTab == 0 {
-                        AlbumsListView()
+                        PlaylistsListView()
                     } else {
-                        ArtistsListView()
+                        LibraryListView()
                     }
                 }
             }
-            .navigationTitle("Library")
+            .navigationTitle("Home")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -66,7 +66,7 @@ struct LibraryView: View {
     }
 }
 
-struct EmptyAlbumsView: View {
+struct EmptyPlaylistsView: View {
     var body: some View {
         VStack(spacing: 30) {
             Spacer()
@@ -76,7 +76,7 @@ struct EmptyAlbumsView: View {
                 .foregroundColor(.purple.opacity(0.6))
             
             VStack(spacing: 16) {
-                Text("No Albums Available")
+                Text("No Playlists Available")
                     .font(.title)
                     .fontWeight(.bold)
                 
@@ -104,7 +104,7 @@ struct EmptyAlbumsView: View {
     }
 }
 
-struct EmptyArtistsView: View {
+struct EmptyLibraryView: View {
     var body: some View {
         VStack(spacing: 30) {
             Spacer()
@@ -114,7 +114,7 @@ struct EmptyArtistsView: View {
                 .foregroundColor(.purple.opacity(0.6))
             
             VStack(spacing: 16) {
-                Text("No Artists Available")
+                Text("No Library Available")
                     .font(.title)
                     .fontWeight(.bold)
                 
@@ -142,7 +142,7 @@ struct EmptyArtistsView: View {
     }
 }
 
-struct AlbumsListView: View {
+struct PlaylistsListView: View {
     @EnvironmentObject var dataManager: UnifiedDataManager
     @EnvironmentObject var musicPlayer: MusicPlayerManager
     
@@ -222,7 +222,7 @@ struct AlbumCard: View {
     }
 }
 
-struct ArtistsListView: View {
+struct LibraryListView: View {
     @EnvironmentObject var dataManager: UnifiedDataManager
     @EnvironmentObject var musicPlayer: MusicPlayerManager
     
