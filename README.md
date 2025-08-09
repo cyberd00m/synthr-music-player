@@ -16,3 +16,6 @@ Everything you expect from a music player — and a few extras:
 - 📥 **Offline playback** – save bandwidth (Soon to be added)
 - 💿 **Play by album** – or shuffle for surprises
 - 🔄 **Background playback**
+
+
+**SYNTHR is heavily inspired by [flo](https://github.com/kepelet/flo)**
