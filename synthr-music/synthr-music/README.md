@@ -6,7 +6,10 @@ A modern music player app for iOS that can connect to Navidrome music servers.
 
 - **Navidrome Server Integration**: Connect to your Navidrome music server
 - **Music Playback**: Full music player with queue management
+- **Background Audio**: Continue playing music when the app is in the background
+- **Lock Screen Controls**: Control playback from the lock screen and Control Center
 - **Search**: Search through your music library
+- **Offline Downloads**: Download songs, albums, and artists for offline listening
 - **Modern UI**: Beautiful, intuitive interface
 
 ## Navidrome Server Connection
@@ -54,6 +57,16 @@ The app connects directly to your Navidrome server to access your music library.
 - Tap on albums or artists to add them to the queue
 - Use the mini-player bar for basic controls
 - Navigate to "Now Playing" for full player interface
+- **Background Playback**: Music continues playing when you switch to other apps or lock your device
+- **Lock Screen Controls**: Use the lock screen or Control Center to play/pause, skip tracks, and adjust volume
+
+### Offline Downloads
+
+- **Long-press** on any song, album, or artist to access download options
+- Download individual tracks, entire albums, or all tracks by an artist
+- Downloaded content is available for offline listening
+- View download progress and manage storage in Settings
+- Downloaded tracks are automatically used when available (no internet required)
 
 ### Search
 

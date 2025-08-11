@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import MediaPlayer
 
 // MARK: - Music Models
 struct Track: Identifiable, Codable {
@@ -20,7 +21,13 @@ struct Track: Identifiable, Codable {
         self.duration = duration
         self.artworkURL = artworkURL
         self.streamURL = streamURL
-        self.isFavorite = false
+        self.isFavorite = isFavorite
+    }
+    
+    var artwork: MPMediaItemArtwork? {
+        // For now, return nil since we don't have actual artwork data
+        // This can be enhanced later to load actual artwork from artworkURL
+        return nil
     }
 }
 
@@ -29,7 +36,7 @@ struct Album: Identifiable, Codable {
     let title: String
     let artist: String
     let artworkURL: String?
-    let tracks: [Track]
+    var tracks: [Track]
     let year: Int?
     
     init(id: String = UUID().uuidString, title: String, artist: String, artworkURL: String? = nil, tracks: [Track] = [], year: Int? = nil) {
@@ -45,7 +52,7 @@ struct Album: Identifiable, Codable {
 struct Artist: Identifiable, Codable {
     let id: String
     let name: String
-    let albums: [Album]
+    var albums: [Album]
     let artworkURL: String?
     
     init(id: String = UUID().uuidString, name: String, albums: [Album] = [], artworkURL: String? = nil) {
@@ -53,6 +60,32 @@ struct Artist: Identifiable, Codable {
         self.name = name
         self.albums = albums
         self.artworkURL = artworkURL
+    }
+}
+
+struct Playlist: Identifiable, Codable {
+    let id: String
+    let name: String
+    let description: String?
+    let createdAt: Date
+    var tracks: [Track]
+    let artworkURL: String?
+    
+    init(id: String = UUID().uuidString, name: String, description: String? = nil, tracks: [Track] = [], artworkURL: String? = nil) {
+        self.id = id
+        self.name = name
+        self.description = description
+        self.createdAt = Date()
+        self.tracks = tracks
+        self.artworkURL = artworkURL
+    }
+    
+    var duration: TimeInterval {
+        tracks.reduce(0) { $0 + $1.duration }
+    }
+    
+    var trackCount: Int {
+        tracks.count
     }
 }
 

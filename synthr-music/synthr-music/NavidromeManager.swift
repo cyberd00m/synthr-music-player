@@ -83,6 +83,8 @@ class NavidromeManager: ObservableObject {
         baseURL = ""
         username = ""
         password = ""
+        // Clear the authentication token
+        UserDefaults.standard.removeObject(forKey: "navidrome_token")
     }
     
     // MARK: - Authentication
@@ -135,7 +137,8 @@ class NavidromeManager: ObservableObject {
     // MARK: - Music Data Fetching
     
     func fetchAlbums(limit: Int = 100, offset: Int = 0) async throws -> [NavidromeAlbum] {
-        let albumsURL = "\(baseURL)/api/album?limit=\(limit)&offset=\(offset)"
+        let token = UserDefaults.standard.string(forKey: "navidrome_token") ?? ""
+        let albumsURL = "\(baseURL)/api/album?limit=\(limit)&offset=\(offset)&t=\(token)"
         let request = URLRequest(url: URL(string: albumsURL)!)
         
         let (data, response) = try await session.data(for: request)
@@ -149,7 +152,8 @@ class NavidromeManager: ObservableObject {
     }
     
     func fetchTracks(limit: Int = 100, offset: Int = 0) async throws -> [NavidromeTrack] {
-        let tracksURL = "\(baseURL)/api/song?limit=\(limit)&offset=\(offset)"
+        let token = UserDefaults.standard.string(forKey: "navidrome_token") ?? ""
+        let tracksURL = "\(baseURL)/api/song?limit=\(limit)&offset=\(offset)&t=\(token)"
         let request = URLRequest(url: URL(string: tracksURL)!)
         
         let (data, response) = try await session.data(for: request)
@@ -163,7 +167,8 @@ class NavidromeManager: ObservableObject {
     }
     
     func fetchArtists(limit: Int = 100, offset: Int = 0) async throws -> [NavidromeArtist] {
-        let artistsURL = "\(baseURL)/api/artist?limit=\(limit)&offset=\(offset)"
+        let token = UserDefaults.standard.string(forKey: "navidrome_token") ?? ""
+        let artistsURL = "\(baseURL)/api/artist?limit=\(limit)&offset=\(offset)&t=\(token)"
         let request = URLRequest(url: URL(string: artistsURL)!)
         
         let (data, response) = try await session.data(for: request)
@@ -177,7 +182,8 @@ class NavidromeManager: ObservableObject {
     }
     
     func searchMusic(query: String, limit: Int = 50) async throws -> NavidromeSearchResult {
-        let searchURL = "\(baseURL)/api/search3?query=\(query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")&limit=\(limit)"
+        let token = UserDefaults.standard.string(forKey: "navidrome_token") ?? ""
+        let searchURL = "\(baseURL)/api/search3?query=\(query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")&limit=\(limit)&t=\(token)"
         let request = URLRequest(url: URL(string: searchURL)!)
         
         let (data, response) = try await session.data(for: request)
@@ -192,11 +198,13 @@ class NavidromeManager: ObservableObject {
     // MARK: - Stream URL Generation
     
     func getStreamURL(for trackId: String) -> String {
-        return "\(baseURL)/api/stream?id=\(trackId)"
+        let token = UserDefaults.standard.string(forKey: "navidrome_token") ?? ""
+        return "\(baseURL)/api/stream?id=\(trackId)&t=\(token)"
     }
     
     func getArtworkURL(for albumId: String) -> String {
-        return "\(baseURL)/api/coverArt?id=\(albumId)"
+        let token = UserDefaults.standard.string(forKey: "navidrome_token") ?? ""
+        return "\(baseURL)/api/coverArt?id=\(albumId)&t=\(token)"
     }
 }
 

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct NowPlayingView: View {
     @EnvironmentObject var musicPlayer: MusicPlayerManager
+    @EnvironmentObject var dataManager: UnifiedDataManager
     
     var body: some View {
         NavigationView {
@@ -28,6 +29,13 @@ struct NowPlayingView: View {
                 }
             }
         }
+        .background(
+            LinearGradient(
+                colors: [Y2KColors.deepSpace, Y2KColors.midnight, Y2KColors.cosmic],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
     }
 }
 
@@ -38,33 +46,39 @@ struct TrackInfoView: View {
         VStack(spacing: 24) {
             // Album artwork
             RoundedRectangle(cornerRadius: 20)
-                .fill(LinearGradient(
-                    colors: [.purple.opacity(0.8), .blue.opacity(0.8)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ))
+                .fill(
+                    LinearGradient(
+                        colors: [Y2KColors.neon, Y2KColors.glow],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
                 .frame(width: 280, height: 280)
                 .overlay(
                     Image(systemName: "music.note")
-                        .font(.system(size: 80))
+                        .font(.monospacedSystem(size: 80, weight: .light))
                         .foregroundColor(.white)
                 )
-                .shadow(radius: 20)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(Y2KColors.nebula.opacity(0.3), lineWidth: 2)
+                )
+                .shadow(color: Y2KColors.neon.opacity(0.3), radius: 20, x: 0, y: 10)
             
             VStack(spacing: 8) {
                 Text(track.title)
-                    .font(.title)
+                    .font(.monospacedTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(.primary)
+                    .foregroundColor(.white)
                     .multilineTextAlignment(.center)
                 
                 Text(track.artist)
-                    .font(.title2)
-                    .foregroundColor(.secondary)
+                    .font(.monospacedTitle2)
+                    .foregroundColor(.white.opacity(0.8))
                 
                 Text(track.album)
-                    .font(.body)
-                    .foregroundColor(.secondary)
+                    .font(.monospacedBody)
+                    .foregroundColor(.white.opacity(0.6))
             }
             .padding(.horizontal)
         }
@@ -85,20 +99,20 @@ struct ProgressView: View {
                 ),
                 in: 0...max(musicPlayer.duration, 1)
             )
-            .accentColor(.purple)
+            .accentColor(Y2KColors.neon)
             .padding(.horizontal)
             
             // Time labels
             HStack {
                 Text(formatTime(musicPlayer.currentTime))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(.monospacedCaption)
+                    .foregroundColor(.white.opacity(0.8))
                 
                 Spacer()
                 
                 Text(formatTime(musicPlayer.duration))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(.monospacedCaption)
+                    .foregroundColor(.white.opacity(0.8))
             }
             .padding(.horizontal)
         }
@@ -121,8 +135,8 @@ struct PlayerControlsView: View {
             HStack(spacing: 40) {
                 Button(action: musicPlayer.previousTrack) {
                     Image(systemName: "backward.fill")
-                        .font(.system(size: 30))
-                        .foregroundColor(.primary)
+                        .font(.monospacedSystem(size: 30, weight: .medium))
+                        .foregroundColor(.white)
                 }
                 
                 Button(action: {
@@ -133,14 +147,14 @@ struct PlayerControlsView: View {
                     }
                 }) {
                     Image(systemName: musicPlayer.playbackState == .playing ? "pause.circle.fill" : "play.circle.fill")
-                        .font(.system(size: 60))
-                        .foregroundColor(.purple)
+                        .font(.monospacedSystem(size: 60, weight: .light))
+                        .foregroundColor(Y2KColors.neon)
                 }
                 
                 Button(action: musicPlayer.nextTrack) {
                     Image(systemName: "forward.fill")
-                        .font(.system(size: 30))
-                        .foregroundColor(.primary)
+                        .font(.monospacedSystem(size: 30, weight: .medium))
+                        .foregroundColor(.white)
                 }
             }
             
@@ -148,26 +162,26 @@ struct PlayerControlsView: View {
             HStack(spacing: 40) {
                 Button(action: musicPlayer.toggleShuffle) {
                     Image(systemName: musicPlayer.shuffleMode == .on ? "shuffle" : "shuffle")
-                        .font(.system(size: 20))
-                        .foregroundColor(musicPlayer.shuffleMode == .on ? .purple : .secondary)
+                        .font(.monospacedSystem(size: 20, weight: .medium))
+                        .foregroundColor(musicPlayer.shuffleMode == .on ? Y2KColors.neon : .white.opacity(0.6))
                 }
                 
                 Button(action: musicPlayer.toggleRepeat) {
                     Image(systemName: repeatIcon)
-                        .font(.system(size: 20))
-                        .foregroundColor(musicPlayer.repeatMode == .none ? .secondary : .purple)
+                        .font(.monospacedSystem(size: 20, weight: .medium))
+                        .foregroundColor(musicPlayer.repeatMode == .none ? .white.opacity(0.6) : Y2KColors.neon)
                 }
                 
                 Button(action: {}) {
                     Image(systemName: "heart")
-                        .font(.system(size: 20))
-                        .foregroundColor(.secondary)
+                        .font(.monospacedSystem(size: 20, weight: .medium))
+                        .foregroundColor(.white.opacity(0.6))
                 }
                 
                 Button(action: {}) {
                     Image(systemName: "list.bullet")
-                        .font(.system(size: 20))
-                        .foregroundColor(.secondary)
+                        .font(.monospacedSystem(size: 20, weight: .medium))
+                        .foregroundColor(.white.opacity(0.6))
                 }
             }
         }
@@ -193,14 +207,15 @@ struct QueueView: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Text("Up Next")
-                    .font(.headline)
+                    .font(.monospacedHeadline)
                     .fontWeight(.bold)
+                    .foregroundColor(.white)
                 
                 Spacer()
                 
                 Text("\(musicPlayer.queue.count) tracks")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(.monospacedCaption)
+                    .foregroundColor(.white.opacity(0.8))
             }
             .padding(.horizontal)
             
@@ -219,8 +234,8 @@ struct QueueView: View {
                 .frame(maxHeight: 200)
             } else {
                 Text("No tracks in queue")
-                    .font(.body)
-                    .foregroundColor(.secondary)
+                    .font(.monospacedBody)
+                    .foregroundColor(.white.opacity(0.8))
                     .frame(maxWidth: .infinity)
                     .padding()
             }
@@ -236,27 +251,33 @@ struct QueueTrackRow: View {
         HStack(spacing: 12) {
             // Track artwork
             RoundedRectangle(cornerRadius: 4)
-                .fill(LinearGradient(
-                    colors: [.purple.opacity(0.6), .blue.opacity(0.6)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ))
+                .fill(
+                    LinearGradient(
+                        colors: [Y2KColors.neon, Y2KColors.glow],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
                 .frame(width: 40, height: 40)
                 .overlay(
                     Image(systemName: "music.note")
-                        .font(.system(size: 16))
+                        .font(.monospacedSystem(size: 16, weight: .medium))
                         .foregroundColor(.white)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 4)
+                        .stroke(Y2KColors.nebula.opacity(0.3), lineWidth: 1)
                 )
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(track.title)
-                    .font(.subheadline)
-                    .foregroundColor(isCurrent ? .purple : .primary)
+                    .font(.monospacedSubheadline)
+                    .foregroundColor(isCurrent ? Y2KColors.neon : .white)
                     .lineLimit(1)
                 
                 Text(track.artist)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(.monospacedCaption)
+                    .foregroundColor(.white.opacity(0.8))
                     .lineLimit(1)
             }
             
@@ -264,14 +285,20 @@ struct QueueTrackRow: View {
             
             if isCurrent {
                 Image(systemName: "speaker.wave.2.fill")
-                    .foregroundColor(.purple)
-                    .font(.caption)
+                    .foregroundColor(Y2KColors.neon)
+                    .font(.monospacedCaption)
             }
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 12)
-        .background(isCurrent ? Color.purple.opacity(0.1) : Color.clear)
-        .cornerRadius(8)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(isCurrent ? Y2KColors.neon.opacity(0.2) : Y2KColors.cosmic.opacity(0.3))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(isCurrent ? Y2KColors.neon.opacity(0.3) : Y2KColors.nebula.opacity(0.2), lineWidth: 1)
+                )
+        )
     }
 }
 
@@ -279,17 +306,18 @@ struct NoTrackPlayingView: View {
     var body: some View {
         VStack(spacing: 30) {
             Image(systemName: "music.note")
-                .font(.system(size: 80))
-                .foregroundColor(.secondary)
+                .font(.monospacedSystem(size: 80, weight: .light))
+                .foregroundColor(.white.opacity(0.6))
             
             VStack(spacing: 16) {
                 Text("No Track Playing")
-                    .font(.title)
+                    .font(.monospacedTitle)
                     .fontWeight(.bold)
+                    .foregroundColor(.white)
                 
                 Text("Select a track from your library to start listening")
-                    .font(.body)
-                    .foregroundColor(.secondary)
+                    .font(.monospacedBody)
+                    .foregroundColor(.white.opacity(0.8))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
             }

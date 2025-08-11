@@ -14,15 +14,15 @@ struct ServerConnectionView: View {
                 // Header
                 VStack(spacing: 10) {
                     Image(systemName: "server.rack")
-                        .font(.system(size: 60))
+                        .font(.monospacedSystem(size: 60))
                         .foregroundColor(.purple)
                     
                     Text("Connect to Navidrome")
-                        .font(.title)
+                        .font(.monospacedTitle)
                         .fontWeight(.bold)
                     
                     Text("Connect to your music server to access your library")
-                        .font(.subheadline)
+                        .font(.monospacedSubheadline)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                 }
@@ -32,7 +32,7 @@ struct ServerConnectionView: View {
                 VStack(spacing: 15) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Server URL")
-                            .font(.headline)
+                            .font(.monospacedHeadline)
                             .foregroundColor(.primary)
                         
                         TextField("e.g., navidrome.example.com", text: $serverURL)
@@ -43,7 +43,7 @@ struct ServerConnectionView: View {
                     
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Username")
-                            .font(.headline)
+                            .font(.monospacedHeadline)
                             .foregroundColor(.primary)
                         
                         TextField("Enter your username", text: $username)
@@ -54,7 +54,7 @@ struct ServerConnectionView: View {
                     
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Password")
-                            .font(.headline)
+                            .font(.monospacedHeadline)
                             .foregroundColor(.primary)
                         
                         SecureField("Enter your password", text: $password)
@@ -87,7 +87,7 @@ struct ServerConnectionView: View {
                                 EmptyView()
                             }
                         }
-                        .font(.subheadline)
+                        .font(.monospacedSubheadline)
                     }
                 }
                 
@@ -217,11 +217,11 @@ struct DetailRow: View {
     var body: some View {
         HStack {
             Text(title)
-                .font(.headline)
+                .font(.monospacedHeadline)
                 .foregroundColor(.primary)
             Spacer()
             Text(value)
-                .font(.body)
+                .font(.monospacedBody)
                 .foregroundColor(.secondary)
         }
     }
