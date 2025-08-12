@@ -55,9 +55,9 @@ struct MainTabView: View {
                     Button(action: { selectedTab = 0 }) {
                         VStack(spacing: 4) {
                             Image(systemName: "house.fill")
-                                .font(.monospacedSystem(size: 24))
+                                .font(.system(size: 24))
                             Text("Home")
-                                .font(.monospacedCaption)
+                                .font(.caption)
                         }
                         .foregroundColor(selectedTab == 0 ? .white : .white.opacity(0.6))
                         .frame(maxWidth: .infinity)
@@ -67,9 +67,9 @@ struct MainTabView: View {
                     Button(action: { selectedTab = 1 }) {
                         VStack(spacing: 4) {
                             Image(systemName: "music.note.list")
-                                .font(.monospacedSystem(size: 24))
+                                .font(.system(size: 24))
                             Text("Library")
-                                .font(.monospacedCaption)
+                                .font(.caption)
                         }
                         .foregroundColor(selectedTab == 1 ? .white : .white.opacity(0.6))
                         .frame(maxWidth: .infinity)
@@ -79,9 +79,9 @@ struct MainTabView: View {
                     Button(action: { selectedTab = 2 }) {
                         VStack(spacing: 4) {
                             Image(systemName: "magnifyingglass")
-                                .font(.monospacedSystem(size: 24))
+                                .font(.system(size: 24))
                             Text("Search")
-                                .font(.monospacedCaption)
+                                .font(.caption)
                         }
                         .foregroundColor(selectedTab == 2 ? .white : .white.opacity(0.6))
                         .frame(maxWidth: .infinity)
@@ -105,7 +105,7 @@ struct MainTabView: View {
                         Image(systemName: "wifi")
                             .foregroundColor(Y2KColors.neon)
                         Text("Connected to Navidrome")
-                            .font(.monospacedCaption)
+                            .font(.caption)
                             .foregroundColor(Y2KColors.neon)
                     }
                     .padding(.horizontal, 12)

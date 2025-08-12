@@ -4,23 +4,19 @@ struct NowPlayingView: View {
     @EnvironmentObject var musicPlayer: MusicPlayerManager
     @EnvironmentObject var dataManager: UnifiedDataManager
     @Environment(\.dismiss) private var dismiss
+    @State private var dragOffset: CGFloat = 0
+    @State private var isDragging = false
+    @State private var showingShareSheet = false
     
     var body: some View {
         ZStack {
-            // Background gradient matching the image's dark brown theme
-            LinearGradient(
-                colors: [
-                    Color(red: 0.2, green: 0.15, blue: 0.1), // Dark brown
-                    Color(red: 0.3, green: 0.2, blue: 0.15), // Medium brown
-                    Color(red: 0.25, green: 0.18, blue: 0.12) // Slightly lighter brown
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            // Background matching the bottom tab bar
+            Y2KColors.cosmic
+                .ignoresSafeArea()
             
+            // Main content with drag animation
             VStack(spacing: 0) {
-                // Drag indicator only
+                // Drag indicator and more options button
                 HStack {
                     RoundedRectangle(cornerRadius: 2.5)
                         .fill(Color.white.opacity(0.6))
@@ -29,6 +25,16 @@ struct NowPlayingView: View {
                         .padding(.top, 10)
                     
                     Spacer()
+                    
+                    Button(action: {
+                        showingShareSheet = true
+                    }) {
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 24, weight: .medium))
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+                    .padding(.trailing, 20)
+                    .padding(.top, 10)
                 }
                 
                 Spacer()
@@ -173,30 +179,7 @@ struct NowPlayingView: View {
                         .padding(.horizontal, 20)
                     }
                     
-                    // Action buttons (like, download, more)
-                    HStack(spacing: 20) {
-                        Spacer()
-                        
-                        Button(action: {}) {
-                            Image(systemName: "heart")
-                                .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(.white)
-                        }
-                        
-                        Button(action: {}) {
-                            Image(systemName: "arrow.down")
-                                .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(.white)
-                        }
-                        
-                        Button(action: {}) {
-                            Image(systemName: "ellipsis")
-                                .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(.white)
-                        }
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 10)
+
                     
                     // Main Playback Controls
                     HStack(spacing: 40) {
@@ -224,29 +207,31 @@ struct NowPlayingView: View {
                                 .foregroundColor(.white)
                         }
                     }
-                    .padding(.vertical, 30)
+                    .padding(.vertical, 20)
                     
-                    // Bottom navigation
+                    // Action buttons (like, download, list)
                     HStack(spacing: 40) {
                         Button(action: {}) {
-                            Image(systemName: "bubble.left")
-                                .font(.system(size: 18, weight: .medium))
-                                .foregroundColor(.white.opacity(0.7))
+                            Image(systemName: "heart")
+                                .font(.system(size: 24, weight: .medium))
+                                .foregroundColor(.white)
                         }
                         
                         Button(action: {}) {
-                            Image(systemName: "airplayaudio")
-                                .font(.system(size: 18, weight: .medium))
-                                .foregroundColor(.white.opacity(0.7))
+                            Image(systemName: "arrow.down")
+                                .font(.system(size: 24, weight: .medium))
+                                .foregroundColor(.white)
                         }
                         
                         Button(action: {}) {
                             Image(systemName: "list.bullet")
-                                .font(.system(size: 18, weight: .medium))
-                                .foregroundColor(.white.opacity(0.7))
+                                .font(.system(size: 24, weight: .medium))
+                                .foregroundColor(.white)
                         }
                     }
-                    .padding(.bottom, 30)
+                    .padding(.vertical, 10)
+                    
+
                 } else {
                     // No track playing
                     VStack(spacing: 30) {
@@ -269,17 +254,47 @@ struct NowPlayingView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
+            .offset(y: dragOffset)
+            .opacity(1.0 - (dragOffset / 1000))
+        
         }
         .navigationBarHidden(true)
         .gesture(
             DragGesture()
+                .onChanged { value in
+                    // Only allow downward dragging
+                    if value.translation.height > 0 {
+                        dragOffset = value.translation.height
+                        isDragging = true
+                    }
+                }
                 .onEnded { value in
+                    isDragging = false
+                    
                     // Dismiss if user drags down more than 100 points
                     if value.translation.height > 100 {
-                        dismiss()
+                        // Animate to full screen height and dismiss
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            dragOffset = UIScreen.main.bounds.height
+                        }
+                        
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            dismiss()
+                        }
+                    } else {
+                        // Snap back to original position
+                        withAnimation(.easeOut(duration: 0.3)) {
+                            dragOffset = 0
+                        }
                     }
                 }
         )
+        .sheet(isPresented: $showingShareSheet) {
+            if let currentTrack = musicPlayer.currentTrack {
+                let shareText = "Now playing: \(currentTrack.title) by \(currentTrack.artist)"
+                ShareSheet(activityItems: [shareText])
+            }
+        }
     }
     
     private func formatTime(_ time: TimeInterval) -> String {
@@ -287,6 +302,18 @@ struct NowPlayingView: View {
         let seconds = Int(time) % 60
         return String(format: "%02d:%02d", minutes, seconds)
     }
+}
+
+// ShareSheet wrapper for UIActivityViewController
+struct ShareSheet: UIViewControllerRepresentable {
+    let activityItems: [Any]
+    
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
+        return controller
+    }
+    
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 struct TrackInfoView: View {

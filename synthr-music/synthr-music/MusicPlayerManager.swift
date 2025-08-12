@@ -159,8 +159,16 @@ class MusicPlayerManager: NSObject, ObservableObject {
         // Ensure audio session is still active when app goes to background
         do {
             let audioSession = AVAudioSession.sharedInstance()
-            try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay, .defaultToSpeaker])
-            try audioSession.setActive(true, options: [])
+            
+            // Check if session is already configured correctly
+            if audioSession.category != .playback {
+                try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay, .defaultToSpeaker])
+            }
+            
+            // Only activate if not already active
+            if !audioSession.isOtherAudioPlaying {
+                try audioSession.setActive(true, options: [])
+            }
             
             // Update now playing info to ensure it's visible in control center
             updateNowPlayingInfo()
@@ -176,8 +184,16 @@ class MusicPlayerManager: NSObject, ObservableObject {
         // Ensure audio session is properly configured
         do {
             let audioSession = AVAudioSession.sharedInstance()
-            try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay, .defaultToSpeaker])
-            try audioSession.setActive(true, options: [])
+            
+            // Check if session is already configured correctly
+            if audioSession.category != .playback {
+                try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay, .defaultToSpeaker])
+            }
+            
+            // Only activate if not already active
+            if !audioSession.isOtherAudioPlaying {
+                try audioSession.setActive(true, options: [])
+            }
         } catch {
             print("Failed to reconfigure audio session when entering foreground: \(error.localizedDescription)")
         }
@@ -187,8 +203,16 @@ class MusicPlayerManager: NSObject, ObservableObject {
         // Ensure audio session is properly configured when app becomes active
         do {
             let audioSession = AVAudioSession.sharedInstance()
-            try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay, .defaultToSpeaker])
-            try audioSession.setActive(true, options: [])
+            
+            // Check if session is already configured correctly
+            if audioSession.category != .playback {
+                try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay, .defaultToSpeaker])
+            }
+            
+            // Only activate if not already active
+            if !audioSession.isOtherAudioPlaying {
+                try audioSession.setActive(true, options: [])
+            }
         } catch {
             print("Failed to reconfigure audio session: \(error.localizedDescription)")
         }
@@ -320,8 +344,16 @@ class MusicPlayerManager: NSObject, ObservableObject {
     private func ensureAudioSessionForBackground() {
         do {
             let audioSession = AVAudioSession.sharedInstance()
-            try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay, .defaultToSpeaker])
-            try audioSession.setActive(true, options: [])
+            
+            // Check if session is already configured correctly
+            if audioSession.category != .playback {
+                try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay, .defaultToSpeaker])
+            }
+            
+            // Only activate if not already active
+            if !audioSession.isOtherAudioPlaying {
+                try audioSession.setActive(true, options: [])
+            }
         } catch {
             print("Failed to ensure audio session for background: \(error)")
         }
@@ -332,10 +364,19 @@ class MusicPlayerManager: NSObject, ObservableObject {
         // Ensure audio session is properly configured for background playback
         do {
             let audioSession = AVAudioSession.sharedInstance()
-            try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay, .defaultToSpeaker])
-            try audioSession.setActive(true, options: [])
+            
+            // Check if session is already configured correctly
+            if audioSession.category != .playback {
+                try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay, .defaultToSpeaker])
+            }
+            
+            // Only activate if not already active
+            if !audioSession.isOtherAudioPlaying {
+                try audioSession.setActive(true, options: [])
+            }
         } catch {
             print("Failed to configure audio session for playback: \(error)")
+            // Continue with playback even if audio session setup fails
         }
         
         guard let player = audioPlayer else { 
@@ -417,10 +458,19 @@ class MusicPlayerManager: NSObject, ObservableObject {
         // Ensure audio session is properly configured
         do {
             let audioSession = AVAudioSession.sharedInstance()
-            try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay, .defaultToSpeaker])
-            try audioSession.setActive(true, options: [])
+            
+            // Check if session is already configured correctly
+            if audioSession.category != .playback {
+                try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay, .defaultToSpeaker])
+            }
+            
+            // Only activate if not already active
+            if !audioSession.isOtherAudioPlaying {
+                try audioSession.setActive(true, options: [])
+            }
         } catch {
             print("Failed to configure audio session for track loading: \(error)")
+            // Continue with track loading even if audio session setup fails
         }
         
         currentTrack = track
