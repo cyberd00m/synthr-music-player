@@ -132,12 +132,32 @@ class UnifiedDataManager: ObservableObject {
             )
         ]
         
+        // Create sample playlists
+        let samplePlaylists = [
+            Playlist(
+                name: "Bine",
+                description: "A great playlist with some amazing tracks",
+                tracks: [sampleTracks[0], sampleTracks[2], sampleTracks[4]]
+            ),
+            Playlist(
+                name: "Synthwave Collection",
+                description: "Best of synthwave music",
+                tracks: [sampleTracks[1], sampleTracks[3], sampleTracks[5]]
+            ),
+            Playlist(
+                name: "Chill Vibes",
+                description: "Relaxing electronic music",
+                tracks: [sampleTracks[0], sampleTracks[1]]
+            )
+        ]
+        
         // Set the data
         self.tracks = sampleTracks
         self.albums = sampleAlbums
         self.artists = sampleArtists
+        self.playlists = samplePlaylists
         
-        print("Loaded \(sampleTracks.count) sample tracks for offline testing")
+        print("Loaded \(sampleTracks.count) sample tracks and \(samplePlaylists.count) playlists for offline testing")
     }
     
     func switchToLocalFiles() {

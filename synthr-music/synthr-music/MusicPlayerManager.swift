@@ -41,6 +41,9 @@ class MusicPlayerManager: NSObject, ObservableObject {
         do {
             let audioSession = AVAudioSession.sharedInstance()
             
+            // First, deactivate the session to avoid conflicts
+            try audioSession.setActive(false, options: .notifyOthersOnDeactivation)
+            
             // Configure audio session for background playback with more comprehensive options
             try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay, .defaultToSpeaker])
             try audioSession.setActive(true, options: [])
@@ -101,7 +104,15 @@ class MusicPlayerManager: NSObject, ObservableObject {
             }
             
         } catch {
-            print("Failed to setup audio session: \(error)")
+            print("Failed to setup audio session: \(error.localizedDescription)")
+            // Try a simpler configuration as fallback
+            do {
+                let audioSession = AVAudioSession.sharedInstance()
+                try audioSession.setCategory(.playback)
+                try audioSession.setActive(true)
+            } catch {
+                print("Failed to setup audio session with fallback: \(error.localizedDescription)")
+            }
         }
     }
     
@@ -154,7 +165,7 @@ class MusicPlayerManager: NSObject, ObservableObject {
             // Update now playing info to ensure it's visible in control center
             updateNowPlayingInfo()
         } catch {
-            print("Failed to keep audio session active in background: \(error)")
+            print("Failed to keep audio session active in background: \(error.localizedDescription)")
         }
     }
     
@@ -168,7 +179,7 @@ class MusicPlayerManager: NSObject, ObservableObject {
             try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay, .defaultToSpeaker])
             try audioSession.setActive(true, options: [])
         } catch {
-            print("Failed to reconfigure audio session when entering foreground: \(error)")
+            print("Failed to reconfigure audio session when entering foreground: \(error.localizedDescription)")
         }
     }
     
@@ -179,7 +190,7 @@ class MusicPlayerManager: NSObject, ObservableObject {
             try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay, .defaultToSpeaker])
             try audioSession.setActive(true, options: [])
         } catch {
-            print("Failed to reconfigure audio session: \(error)")
+            print("Failed to reconfigure audio session: \(error.localizedDescription)")
         }
     }
     
@@ -189,7 +200,7 @@ class MusicPlayerManager: NSObject, ObservableObject {
             let audioSession = AVAudioSession.sharedInstance()
             try audioSession.setActive(true, options: [])
         } catch {
-            print("Failed to keep audio session active: \(error)")
+            print("Failed to keep audio session active: \(error.localizedDescription)")
         }
     }
     

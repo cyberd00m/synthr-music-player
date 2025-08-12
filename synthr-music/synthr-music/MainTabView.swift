@@ -45,6 +45,7 @@ struct MainTabView: View {
                 if musicPlayer.currentTrack != nil {
                     MiniPlayerBar()
                         .environmentObject(musicPlayer)
+                        .environmentObject(dataManager)
                         .environmentObject(downloadManager)
                         .padding(.bottom, 15)
                 }

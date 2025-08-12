@@ -187,30 +187,30 @@ struct PlaylistsListView: View {
                             GridItem(.flexible())
                         ], spacing: 20) {
                             ForEach(dataManager.playlists) { playlist in
-                                PlaylistCard(playlist: playlist)
-                                    .onTapGesture {
-                                        if !playlist.tracks.isEmpty {
-                                            musicPlayer.setQueue(playlist.tracks)
-                                        }
-                                    }
-                                    .contextMenu {
-                                        PlaylistContextMenu(playlist: playlist)
-                                    }
+                                NavigationLink(destination: PlaylistDetailView(playlist: playlist)
+                                    .environmentObject(musicPlayer)
+                                    .environmentObject(downloadManager)) {
+                                    PlaylistCard(playlist: playlist)
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                                .contextMenu {
+                                    PlaylistContextMenu(playlist: playlist)
+                                }
                             }
                         }
                         .padding()
                     } else {
                         LazyVStack(spacing: 12) {
                             ForEach(dataManager.playlists) { playlist in
-                                PlaylistListRow(playlist: playlist)
-                                    .onTapGesture {
-                                        if !playlist.tracks.isEmpty {
-                                            musicPlayer.setQueue(playlist.tracks)
-                                        }
-                                    }
-                                    .contextMenu {
-                                        PlaylistContextMenu(playlist: playlist)
-                                    }
+                                NavigationLink(destination: PlaylistDetailView(playlist: playlist)
+                                    .environmentObject(musicPlayer)
+                                    .environmentObject(downloadManager)) {
+                                    PlaylistListRow(playlist: playlist)
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                                .contextMenu {
+                                    PlaylistContextMenu(playlist: playlist)
+                                }
                             }
                         }
                         .padding()
