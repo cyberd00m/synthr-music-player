@@ -387,16 +387,19 @@ struct LibraryListView: View {
     @EnvironmentObject var dataManager: UnifiedDataManager
     @EnvironmentObject var musicPlayer: MusicPlayerManager
     @EnvironmentObject var downloadManager: DownloadManager
+    @State private var showPlaylistSheet = false
+    @State private var selectedTracks: [Track] = []
+    @State private var selectedAlbum: Album?
     
     var body: some View {
         ScrollView {
-            if dataManager.libraryViewMode == .grid {
+            if dataManager.searchViewMode == .grid {
                 LazyVGrid(columns: [
                     GridItem(.flexible()),
                     GridItem(.flexible())
                 ], spacing: 20) {
                     ForEach(dataManager.artists) { artist in
-                        ArtistCard(artist: artist)
+                        ArtistCard(artist: artist, onAddToPlaylist: createAddToPlaylistClosure(for: artist))
                             .onTapGesture {
                                 let allTracks = artist.albums.flatMap { $0.tracks }
                                 if !allTracks.isEmpty {
@@ -412,7 +415,7 @@ struct LibraryListView: View {
             } else {
                 LazyVStack(spacing: 12) {
                     ForEach(dataManager.artists) { artist in
-                        ArtistListRow(artist: artist)
+                        ArtistListRow(artist: artist, onAddToPlaylist: createAddToPlaylistClosure(for: artist))
                             .onTapGesture {
                                 let allTracks = artist.albums.flatMap { $0.tracks }
                                 if !allTracks.isEmpty {
@@ -427,11 +430,28 @@ struct LibraryListView: View {
                 .padding()
             }
         }
+        .sheet(isPresented: $showPlaylistSheet) {
+            PlaylistSelectionSheet(tracks: selectedTracks, album: selectedAlbum)
+                .environmentObject(dataManager)
+        }
     }
+    
+    private func createAddToPlaylistClosure(for artist: Artist) -> () -> Void {
+        return {
+            let allTracks = artist.albums.flatMap { $0.tracks }
+            if !allTracks.isEmpty {
+                self.selectedTracks = allTracks
+                self.selectedAlbum = nil
+                self.showPlaylistSheet = true
+            }
+        }
+    }
+
 }
 
 struct ArtistCard: View {
     let artist: Artist
+    let onAddToPlaylist: () -> Void
     @EnvironmentObject var downloadManager: DownloadManager
     
     var body: some View {
@@ -546,6 +566,7 @@ struct ArtistCard: View {
 
 struct ArtistListRow: View {
     let artist: Artist
+    let onAddToPlaylist: () -> Void
     @EnvironmentObject var downloadManager: DownloadManager
     
     var body: some View {
@@ -671,6 +692,8 @@ struct ArtistListRow: View {
         )
     }
 }
+
+
 
 
 

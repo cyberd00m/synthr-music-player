@@ -65,7 +65,7 @@ struct synthr_musicApp: App {
                     // Ensure audio session is configured early
                     do {
                         let audioSession = AVAudioSession.sharedInstance()
-                        try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay, .defaultToSpeaker])
+                        try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay])
                         try audioSession.setActive(true, options: [])
                     } catch {
                         print("Failed to configure audio session at app launch: \(error)")

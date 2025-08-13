@@ -89,6 +89,25 @@ struct Playlist: Identifiable, Codable {
     }
 }
 
+// MARK: - Radio Models
+struct RadioStation: Identifiable, Codable {
+    let id: String
+    let name: String
+    let url: String
+    let genre: String?
+    let description: String?
+    let isFavorite: Bool
+    
+    init(id: String = UUID().uuidString, name: String, url: String, genre: String? = nil, description: String? = nil, isFavorite: Bool = false) {
+        self.id = id
+        self.name = name
+        self.url = url
+        self.genre = genre
+        self.description = description
+        self.isFavorite = isFavorite
+    }
+}
+
 // MARK: - Player State
 enum PlaybackState {
     case playing

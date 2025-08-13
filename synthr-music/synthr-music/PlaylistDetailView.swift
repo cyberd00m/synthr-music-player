@@ -3,8 +3,11 @@ import SwiftUI
 struct PlaylistDetailView: View {
     let playlist: Playlist
     @EnvironmentObject var musicPlayer: MusicPlayerManager
+    @EnvironmentObject var dataManager: UnifiedDataManager
     @EnvironmentObject var downloadManager: DownloadManager
     @Environment(\.dismiss) private var dismiss
+    @State private var showPlaylistSheet = false
+    @State private var selectedTrack: Track?
     
     var body: some View {
         NavigationView {
@@ -109,7 +112,11 @@ struct PlaylistDetailView: View {
                                 TrackRow(
                                     track: track,
                                     index: index + 1,
-                                    isCurrentTrack: musicPlayer.currentTrack?.id == track.id
+                                    isCurrentTrack: musicPlayer.currentTrack?.id == track.id,
+                                    onAddToPlaylist: {
+                                        selectedTrack = track
+                                        showPlaylistSheet = true
+                                    }
                                 )
                                 .onTapGesture {
                                     musicPlayer.setQueue(playlist.tracks, startIndex: index)
@@ -156,6 +163,12 @@ struct PlaylistDetailView: View {
                 endPoint: .bottomTrailing
             )
         )
+        .sheet(isPresented: $showPlaylistSheet) {
+            if let track = selectedTrack {
+                PlaylistSelectionSheet(tracks: [track], album: nil)
+                    .environmentObject(dataManager)
+            }
+        }
     }
     
     private func formatDate(_ date: Date) -> String {
@@ -163,6 +176,8 @@ struct PlaylistDetailView: View {
         formatter.unitsStyle = .abbreviated
         return formatter.localizedString(for: date, relativeTo: Date())
     }
+    
+
 }
 
 struct PlaylistArtworkView: View {
@@ -240,6 +255,7 @@ struct TrackRow: View {
     let track: Track
     let index: Int
     let isCurrentTrack: Bool
+    let onAddToPlaylist: () -> Void
     @EnvironmentObject var downloadManager: DownloadManager
     
     var body: some View {
@@ -299,6 +315,12 @@ struct TrackRow: View {
             RoundedRectangle(cornerRadius: 8)
                 .fill(isCurrentTrack ? Y2KColors.neon.opacity(0.2) : Color.clear)
         )
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            Button(action: onAddToPlaylist) {
+                Label("Add to Playlist", systemImage: "plus.circle")
+            }
+            .tint(Y2KColors.neon)
+        }
     }
 }
 

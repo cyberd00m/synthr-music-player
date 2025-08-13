@@ -1,7 +1,7 @@
 import Foundation
-import SwiftUI
 import AVFoundation
 import MediaPlayer
+import SwiftUI
 
 class MusicPlayerManager: NSObject, ObservableObject {
     @Published var currentTrack: Track?
@@ -14,6 +14,7 @@ class MusicPlayerManager: NSObject, ObservableObject {
     @Published var currentQueueIndex: Int = 0
     
     private var audioPlayer: AVAudioPlayer?
+    private var avPlayer: AVPlayer?
     private var timer: Timer?
     private weak var dataManager: UnifiedDataManager?
     private weak var downloadManager: DownloadManager?
@@ -45,7 +46,7 @@ class MusicPlayerManager: NSObject, ObservableObject {
             try audioSession.setActive(false, options: .notifyOthersOnDeactivation)
             
             // Configure audio session for background playback with more comprehensive options
-            try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay, .defaultToSpeaker])
+            try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay])
             try audioSession.setActive(true, options: [])
             
             // Setup remote control events for lock screen controls
@@ -126,12 +127,23 @@ class MusicPlayerManager: NSObject, ObservableObject {
         switch type {
         case .began:
             // Audio session interrupted, pause playback
+            print("🔇 Audio session interrupted")
             pause()
         case .ended:
             // Audio session interruption ended, resume if appropriate
             guard let optionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt else { return }
             let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
             if options.contains(.shouldResume) {
+                print("🔊 Audio session interruption ended, resuming playback")
+                // For radio streams, we need to reconfigure the audio session
+                if avPlayer != nil {
+                    do {
+                        let audioSession = AVAudioSession.sharedInstance()
+                        try audioSession.setActive(true, options: [])
+                    } catch {
+                        print("❌ Failed to reactivate audio session: \(error)")
+                    }
+                }
                 play()
             }
         @unknown default:
@@ -162,7 +174,7 @@ class MusicPlayerManager: NSObject, ObservableObject {
             
             // Check if session is already configured correctly
             if audioSession.category != .playback {
-                try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay, .defaultToSpeaker])
+                try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay])
             }
             
             // Only activate if not already active
@@ -187,7 +199,7 @@ class MusicPlayerManager: NSObject, ObservableObject {
             
             // Check if session is already configured correctly
             if audioSession.category != .playback {
-                try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay, .defaultToSpeaker])
+                try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay])
             }
             
             // Only activate if not already active
@@ -206,7 +218,7 @@ class MusicPlayerManager: NSObject, ObservableObject {
             
             // Check if session is already configured correctly
             if audioSession.category != .playback {
-                try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay, .defaultToSpeaker])
+                try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay])
             }
             
             // Only activate if not already active
@@ -336,7 +348,11 @@ class MusicPlayerManager: NSObject, ObservableObject {
     private func setupTimer() {
         timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             guard let self = self, let player = self.audioPlayer else { return }
-            self.currentTime = player.currentTime
+            let newTime = player.currentTime
+            // Validate the time value to avoid NaN
+            if newTime >= 0 && !newTime.isNaN && !newTime.isInfinite {
+                self.currentTime = newTime
+            }
             self.updateNowPlayingInfo()
         }
     }
@@ -347,7 +363,7 @@ class MusicPlayerManager: NSObject, ObservableObject {
             
             // Check if session is already configured correctly
             if audioSession.category != .playback {
-                try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay, .defaultToSpeaker])
+                try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay])
             }
             
             // Only activate if not already active
@@ -367,7 +383,7 @@ class MusicPlayerManager: NSObject, ObservableObject {
             
             // Check if session is already configured correctly
             if audioSession.category != .playback {
-                try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay, .defaultToSpeaker])
+                try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay])
             }
             
             // Only activate if not already active
@@ -379,6 +395,25 @@ class MusicPlayerManager: NSObject, ObservableObject {
             // Continue with playback even if audio session setup fails
         }
         
+        // Check if we have an AVPlayer (radio stream)
+        if let avPlayer = avPlayer {
+            print("🎵 Playing radio stream with AVPlayer")
+            print("🎵 Player status before play: \(avPlayer.status.rawValue)")
+            print("🎵 Player time control status before play: \(avPlayer.timeControlStatus.rawValue)")
+            print("🎵 Player rate before play: \(avPlayer.rate)")
+            
+            avPlayer.play()
+            
+            print("🎵 Player status after play: \(avPlayer.status.rawValue)")
+            print("🎵 Player time control status after play: \(avPlayer.timeControlStatus.rawValue)")
+            print("🎵 Player rate after play: \(avPlayer.rate)")
+            
+            playbackState = .playing
+            updateNowPlayingInfo()
+            return
+        }
+        
+        // Check if we have an AVAudioPlayer (regular audio)
         guard let player = audioPlayer else { 
             // If no player exists, try to load the current track
             if let track = currentTrack {
@@ -402,6 +437,13 @@ class MusicPlayerManager: NSObject, ObservableObject {
     }
     
     func pause() {
+        if let avPlayer = avPlayer {
+            avPlayer.pause()
+            playbackState = .paused
+            updateNowPlayingInfo()
+            return
+        }
+        
         guard let player = audioPlayer else { return }
         player.pause()
         playbackState = .paused
@@ -409,6 +451,15 @@ class MusicPlayerManager: NSObject, ObservableObject {
     }
     
     func stop() {
+        if let avPlayer = avPlayer {
+            avPlayer.pause()
+            avPlayer.seek(to: .zero)
+            playbackState = .stopped
+            currentTime = 0
+            updateNowPlayingInfo()
+            return
+        }
+        
         guard let player = audioPlayer else { return }
         player.stop()
         playbackState = .stopped
@@ -448,6 +499,8 @@ class MusicPlayerManager: NSObject, ObservableObject {
     
     func seek(to time: TimeInterval) {
         guard let player = audioPlayer else { return }
+        // Validate the time value to avoid NaN
+        guard time >= 0 && !time.isNaN && !time.isInfinite else { return }
         player.currentTime = time
         currentTime = time
         updateNowPlayingInfo()
@@ -461,7 +514,7 @@ class MusicPlayerManager: NSObject, ObservableObject {
             
             // Check if session is already configured correctly
             if audioSession.category != .playback {
-                try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay, .defaultToSpeaker])
+                try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay])
             }
             
             // Only activate if not already active
@@ -590,6 +643,44 @@ class MusicPlayerManager: NSObject, ObservableObject {
     }
     
     private func loadRemoteAudioFile(_ url: URL) {
+        // Check if this is a radio stream - smarter detection
+        let urlString = url.absoluteString.lowercased()
+        
+        // Common radio streaming indicators
+        let streamingKeywords = ["stream", "radio", "live", "broadcast", "icecast", "shoutcast"]
+        let streamingProtocols = ["rtsp", "rtmp", "hls", "m3u8"]
+        let playlistFormats = ["pls", "m3u", "asx", "ram"]
+        
+        // Check for streaming keywords in URL
+        let hasStreamingKeyword = streamingKeywords.contains { urlString.contains($0) }
+        let hasStreamingProtocol = streamingProtocols.contains { urlString.contains($0) }
+        let hasPlaylistFormat = playlistFormats.contains { urlString.contains($0) }
+        
+        // Check if it's a direct audio stream (common radio formats)
+        let audioExtensions = ["mp3", "aac", "ogg", "wav", "flac"]
+        let hasAudioExtension = audioExtensions.contains(url.pathExtension.lowercased())
+        
+        // If it has streaming indicators OR is a direct audio stream, treat as radio
+        let isRadioStream = hasStreamingKeyword || hasStreamingProtocol || hasPlaylistFormat || hasAudioExtension
+        
+        print("🎵 URL: \(url)")
+        print("🎵 Path extension: \(url.pathExtension)")
+        print("🎵 Has streaming keyword: \(hasStreamingKeyword)")
+        print("🎵 Has streaming protocol: \(hasStreamingProtocol)")
+        print("🎵 Has playlist format: \(hasPlaylistFormat)")
+        print("🎵 Has audio extension: \(hasAudioExtension)")
+        print("🎵 Detected as radio stream: \(isRadioStream)")
+        
+        if isRadioStream {
+            // For radio streams, use AVPlayer which handles streaming better
+            loadRadioStream(url)
+        } else {
+            // For regular audio files, download as data
+            loadRemoteAudioFileAsData(url)
+        }
+    }
+    
+    private func loadRemoteAudioFileAsData(_ url: URL) {
         // Create a data task to download the audio data
         let task = URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
             DispatchQueue.main.async {
@@ -640,6 +731,129 @@ class MusicPlayerManager: NSObject, ObservableObject {
         task.resume()
     }
     
+    private func loadRadioStream(_ url: URL) {
+        print("🎵 Starting to load radio stream: \(url)")
+        
+        // Ensure audio session is properly configured for streaming
+        do {
+            let audioSession = AVAudioSession.sharedInstance()
+            
+            // Deactivate first to avoid conflicts
+            try audioSession.setActive(false, options: .notifyOthersOnDeactivation)
+            
+            // Configure for streaming with more permissive options
+            try audioSession.setCategory(.playback, mode: .default, options: [
+                .allowBluetooth, 
+                .allowBluetoothA2DP, 
+                .allowAirPlay, 
+                .mixWithOthers
+            ])
+            
+            // Activate the session
+            try audioSession.setActive(true, options: [])
+            
+            print("🎵 Audio session configured for radio streaming")
+            print("🎵 Audio session category: \(audioSession.category)")
+            print("🎵 Audio session mode: \(audioSession.mode)")
+            print("🎵 Audio session is active: \(audioSession.isOtherAudioPlaying)")
+        } catch {
+            print("❌ Failed to configure audio session for radio: \(error)")
+        }
+        
+        // Stop any existing players
+        audioPlayer?.stop()
+        audioPlayer = nil
+        avPlayer?.pause()
+        avPlayer = nil
+        
+        // Create AVPlayer for radio stream with better configuration
+        let player = AVPlayer(url: url)
+        player.automaticallyWaitsToMinimizeStalling = false
+        
+        // Configure player for streaming
+        if #available(iOS 10.0, *) {
+            player.automaticallyWaitsToMinimizeStalling = false
+        }
+        
+        // Add observer for player status
+        player.addObserver(self, forKeyPath: "status", options: [.new, .old], context: nil)
+        
+        // Add observer for time control status
+        player.addObserver(self, forKeyPath: "timeControlStatus", options: [.new, .old], context: nil)
+        
+        // Add observer for player item status
+        player.currentItem?.addObserver(self, forKeyPath: "status", options: [.new, .old], context: nil)
+        
+        // Add observer for player rate
+        player.addObserver(self, forKeyPath: "rate", options: [.new, .old], context: nil)
+        
+        // Set the player
+        self.avPlayer = player
+        self.duration = 0 // Radio streams are continuous
+        self.playbackState = .loading
+        self.updateNowPlayingInfo()
+        
+        // Set volume to ensure audio is audible
+        player.volume = 1.0
+        
+        print("🎵 Radio stream loaded with AVPlayer: \(url)")
+        print("🎵 Player status: \(player.status.rawValue)")
+        print("🎵 Player time control status: \(player.timeControlStatus.rawValue)")
+        print("🎵 Player rate: \(player.rate)")
+        print("🎵 Player volume: \(player.volume)")
+        
+        // Check audio session status
+        let audioSession = AVAudioSession.sharedInstance()
+        print("🎵 Audio session category: \(audioSession.category)")
+        print("🎵 Audio session mode: \(audioSession.mode)")
+        print("🎵 Audio session is active: \(audioSession.isOtherAudioPlaying)")
+        print("🎵 Audio session output volume: \(audioSession.outputVolume)")
+        
+        // Try to play immediately to test if it works
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            if let player = self?.avPlayer {
+                print("🎵 Testing radio stream playback...")
+                player.play()
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+                    if let player = self?.avPlayer {
+                        print("🎵 Radio stream test results:")
+                        print("🎵 Player status: \(player.status.rawValue)")
+                        print("🎵 Player time control status: \(player.timeControlStatus.rawValue)")
+                        print("🎵 Player rate: \(player.rate)")
+                        
+                        if player.rate == 0 {
+                            print("❌ Radio stream not playing, trying AVAudioPlayer fallback...")
+                            self?.tryAVAudioPlayerFallback(url: url)
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    private func tryAVAudioPlayerFallback(url: URL) {
+        print("🎵 Trying AVAudioPlayer fallback for radio stream")
+        
+        do {
+            let player = try AVAudioPlayer(contentsOf: url)
+            player.delegate = self
+            player.prepareToPlay()
+            player.volume = 1.0
+            
+            self.audioPlayer = player
+            self.avPlayer?.pause()
+            self.avPlayer = nil
+            self.duration = 0
+            self.playbackState = .paused
+            self.updateNowPlayingInfo()
+            
+            print("🎵 AVAudioPlayer fallback created successfully")
+        } catch {
+            print("❌ AVAudioPlayer fallback also failed: \(error)")
+        }
+    }
+    
     func setQueue(_ tracks: [Track], startIndex: Int = 0) {
         queue = tracks
         currentQueueIndex = startIndex
@@ -674,10 +888,86 @@ class MusicPlayerManager: NSObject, ObservableObject {
     
 
     
+    // MARK: - KVO Observer
+    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+        if let player = object as? AVPlayer {
+            if keyPath == "status" {
+                DispatchQueue.main.async {
+                    switch player.status {
+                    case .readyToPlay:
+                        print("🎵 AVPlayer ready to play")
+                        self.playbackState = .paused
+                        self.updateNowPlayingInfo()
+                    case .failed:
+                        print("❌ AVPlayer failed: \(player.error?.localizedDescription ?? "Unknown error")")
+                        if let error = player.error {
+                            print("❌ Player error details: \(error)")
+                        }
+                        self.playbackState = .paused
+                    case .unknown:
+                        print("⏳ AVPlayer status unknown")
+                    @unknown default:
+                        break
+                    }
+                }
+            } else if keyPath == "timeControlStatus" {
+                DispatchQueue.main.async {
+                    switch player.timeControlStatus {
+                    case .playing:
+                        print("🎵 AVPlayer time control: playing")
+                        self.playbackState = .playing
+                    case .paused:
+                        print("🎵 AVPlayer time control: paused")
+                        self.playbackState = .paused
+                    case .waitingToPlayAtSpecifiedRate:
+                        print("🎵 AVPlayer time control: waiting to play")
+                        self.playbackState = .loading
+                    @unknown default:
+                        break
+                    }
+                }
+            } else if keyPath == "rate" {
+                DispatchQueue.main.async {
+                    print("🎵 AVPlayer rate changed to: \(player.rate)")
+                    if player.rate > 0 {
+                        print("🎵 Player is actually playing audio")
+                    } else {
+                        print("🎵 Player is not playing audio")
+                    }
+                }
+            }
+        } else if let playerItem = object as? AVPlayerItem {
+            if keyPath == "status" {
+                DispatchQueue.main.async {
+                    switch playerItem.status {
+                    case .readyToPlay:
+                        print("🎵 AVPlayerItem ready to play")
+                    case .failed:
+                        print("❌ AVPlayerItem failed: \(playerItem.error?.localizedDescription ?? "Unknown error")")
+                        if let error = playerItem.error {
+                            print("❌ PlayerItem error details: \(error)")
+                        }
+                        self.playbackState = .paused
+                    case .unknown:
+                        print("⏳ AVPlayerItem status unknown")
+                    @unknown default:
+                        break
+                    }
+                }
+            }
+        }
+    }
+    
     // MARK: - Cleanup
     deinit {
         timer?.invalidate()
         audioPlayer?.stop()
+        avPlayer?.pause()
+        
+        // Remove AVPlayer observers
+        avPlayer?.removeObserver(self, forKeyPath: "status")
+        avPlayer?.removeObserver(self, forKeyPath: "timeControlStatus")
+        avPlayer?.currentItem?.removeObserver(self, forKeyPath: "status")
         
         // Remove notification observers
         NotificationCenter.default.removeObserver(self)

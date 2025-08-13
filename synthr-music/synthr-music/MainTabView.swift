@@ -4,6 +4,7 @@ struct MainTabView: View {
     @StateObject private var musicPlayer = MusicPlayerManager()
     @StateObject private var dataManager = UnifiedDataManager()
     @StateObject private var downloadManager = DownloadManager()
+    @StateObject private var networkManager = NetworkManager()
     @State private var showServerConnection = false
     @State private var selectedTab = 0
     
@@ -14,27 +15,40 @@ struct MainTabView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
+                // Offline banner at the top
+                OfflineBanner(networkManager: networkManager)
+                
                 // Main content area - takes up available space
                 TabView(selection: $selectedTab) {
                     HomeView()
                         .environmentObject(musicPlayer)
                         .environmentObject(dataManager)
                         .environmentObject(downloadManager)
+                        .environmentObject(networkManager)
                         .tag(0)
                     
                     LibraryView()
                         .environmentObject(musicPlayer)
                         .environmentObject(dataManager)
                         .environmentObject(downloadManager)
+                        .environmentObject(networkManager)
                         .tag(1)
+                    
+                    RadioView()
+                        .environmentObject(musicPlayer)
+                        .environmentObject(dataManager)
+                        .environmentObject(downloadManager)
+                        .environmentObject(networkManager)
+                        .tag(2)
                     
                     SearchView()
                         .environmentObject(musicPlayer)
                         .environmentObject(dataManager)
                         .environmentObject(downloadManager)
-                        .tag(2)
+                        .environmentObject(networkManager)
+                        .tag(3)
                 }
-                .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+                .tabViewStyle(DefaultTabViewStyle())
                 .onAppear {
                     // Connect MusicPlayerManager with UnifiedDataManager and DownloadManager
                     musicPlayer.setDataManager(dataManager)
@@ -47,6 +61,7 @@ struct MainTabView: View {
                         .environmentObject(musicPlayer)
                         .environmentObject(dataManager)
                         .environmentObject(downloadManager)
+                        .environmentObject(networkManager)
                         .padding(.bottom, 15)
                 }
                 
@@ -78,12 +93,24 @@ struct MainTabView: View {
                     
                     Button(action: { selectedTab = 2 }) {
                         VStack(spacing: 4) {
+                            Image(systemName: "radio")
+                                .font(.system(size: 24))
+                            Text("Radio")
+                                .font(.caption)
+                        }
+                        .foregroundColor(selectedTab == 2 ? .white : .white.opacity(0.6))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                    }
+                    
+                    Button(action: { selectedTab = 3 }) {
+                        VStack(spacing: 4) {
                             Image(systemName: "magnifyingglass")
                                 .font(.system(size: 24))
                             Text("Search")
                                 .font(.caption)
                         }
-                        .foregroundColor(selectedTab == 2 ? .white : .white.opacity(0.6))
+                        .foregroundColor(selectedTab == 3 ? .white : .white.opacity(0.6))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 8)
                     }

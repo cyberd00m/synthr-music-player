@@ -181,7 +181,7 @@ struct PlaylistsListView: View {
                 }
             } else {
                 ScrollView {
-                    if dataManager.libraryViewMode == .grid {
+                    if dataManager.homeViewMode == .grid {
                         LazyVGrid(columns: [
                             GridItem(.flexible()),
                             GridItem(.flexible())
@@ -189,6 +189,7 @@ struct PlaylistsListView: View {
                             ForEach(dataManager.playlists) { playlist in
                                 NavigationLink(destination: PlaylistDetailView(playlist: playlist)
                                     .environmentObject(musicPlayer)
+                                    .environmentObject(dataManager)
                                     .environmentObject(downloadManager)) {
                                     PlaylistCard(playlist: playlist)
                                 }
@@ -204,6 +205,7 @@ struct PlaylistsListView: View {
                             ForEach(dataManager.playlists) { playlist in
                                 NavigationLink(destination: PlaylistDetailView(playlist: playlist)
                                     .environmentObject(musicPlayer)
+                                    .environmentObject(dataManager)
                                     .environmentObject(downloadManager)) {
                                     PlaylistListRow(playlist: playlist)
                                 }
@@ -528,8 +530,7 @@ struct CreatePlaylistView: View {
                         .foregroundColor(.white)
                     
                     TextField("Enter playlist name", text: $playlistName)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .foregroundColor(.black)
+                        .textFieldStyle(Y2KTextFieldStyle())
                 }
                 
                 VStack(alignment: .leading, spacing: 8) {
@@ -538,8 +539,7 @@ struct CreatePlaylistView: View {
                         .foregroundColor(.white)
                     
                     TextField("Enter description", text: $playlistDescription)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .foregroundColor(.black)
+                        .textFieldStyle(Y2KTextFieldStyle())
                 }
                 
                 Spacer()

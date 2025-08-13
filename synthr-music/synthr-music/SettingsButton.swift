@@ -50,6 +50,10 @@ struct SettingsView: View {
     @State private var importStatus = "No files imported"
     @State private var importError: String?
     
+    // Radio station management fields
+    @State private var showRadioStationSheet = false
+    @State private var showRadioStationList = false
+    
     var body: some View {
         NavigationView {
             ZStack {
@@ -63,7 +67,163 @@ struct SettingsView: View {
                 
                 ScrollView {
                     VStack(spacing: 24) {
-                        // Server Connection Section
+                        // 1. Notifications Section
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Notifications")
+                                .font(.headline)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                            
+                            Toggle("Enable Notifications", isOn: $enableNotifications)
+                                .tint(Y2KColors.neon)
+                                .onChange(of: enableNotifications) { newValue in
+                                    if newValue {
+                                        requestNotificationPermission()
+                                    }
+                                }
+                        }
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Y2KColors.cosmic.opacity(0.5))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Y2KColors.nebula.opacity(0.2), lineWidth: 1)
+                                )
+                        )
+                        
+                        // 2. Display Settings Section
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Display")
+                                .font(.headline)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                            
+                            VStack(alignment: .leading, spacing: 12) {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    HStack {
+                                        Text("Home View")
+                                            .foregroundColor(.white)
+                                        Spacer()
+                                        Picker("Home View", selection: $dataManager.homeViewMode) {
+                                            ForEach(UnifiedDataManager.ViewMode.allCases, id: \.self) { mode in
+                                                Text(mode.rawValue).tag(mode)
+                                            }
+                                        }
+                                        .pickerStyle(SegmentedPickerStyle())
+                                        .frame(width: 120)
+                                        .onChange(of: dataManager.homeViewMode) { _ in
+                                            dataManager.saveViewModeSettings()
+                                        }
+                                    }
+                                    
+                                    Text("Choose how to display your home screen")
+                                        .font(.caption)
+                                        .foregroundColor(.white.opacity(0.8))
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 4) {
+                                    HStack {
+                                        Text("Library View")
+                                            .foregroundColor(.white)
+                                        Spacer()
+                                        Picker("Library View", selection: $dataManager.libraryViewMode) {
+                                            ForEach(UnifiedDataManager.ViewMode.allCases, id: \.self) { mode in
+                                                Text(mode.rawValue).tag(mode)
+                                            }
+                                        }
+                                        .pickerStyle(SegmentedPickerStyle())
+                                        .frame(width: 120)
+                                        .onChange(of: dataManager.libraryViewMode) { _ in
+                                            dataManager.saveViewModeSettings()
+                                        }
+                                    }
+                                    
+                                    Text("Choose how to display your music library")
+                                        .font(.caption)
+                                        .foregroundColor(.white.opacity(0.8))
+                                }
+                            }
+                        }
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Y2KColors.cosmic.opacity(0.5))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Y2KColors.nebula.opacity(0.2), lineWidth: 1)
+                                )
+                        )
+                        
+                        // 3. Playback Settings Section
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Playback")
+                                .font(.headline)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                            
+                            VStack(alignment: .leading, spacing: 12) {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Toggle("Auto-play", isOn: $autoPlay)
+                                        .tint(Y2KColors.neon)
+                                        .onChange(of: autoPlay) { _ in
+                                            savePlaybackSettings()
+                                        }
+                                    
+                                    Text("Automatically start playing the next track when the current one ends")
+                                        .font(.caption)
+                                        .foregroundColor(.white.opacity(0.8))
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Toggle("Crossfade", isOn: $crossfade)
+                                        .tint(Y2KColors.neon)
+                                        .onChange(of: crossfade) { _ in
+                                            savePlaybackSettings()
+                                        }
+                                    
+                                    Text("Smoothly blend between tracks for seamless playback")
+                                        .font(.caption)
+                                        .foregroundColor(.white.opacity(0.8))
+                                }
+                                
+                                if crossfade {
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        HStack {
+                                            Text("Crossfade Duration")
+                                                .font(.subheadline)
+                                                .fontWeight(.medium)
+                                                .foregroundColor(.white)
+                                            Spacer()
+                                            Text("\(crossfadeDuration, specifier: "%.1f")s")
+                                                .font(.subheadline)
+                                                .foregroundColor(.white.opacity(0.8))
+                                        }
+                                        
+                                        Slider(value: $crossfadeDuration, in: 1.0...8.0, step: 0.5)
+                                            .accentColor(Y2KColors.neon)
+                                            .onChange(of: crossfadeDuration) { _ in
+                                                savePlaybackSettings()
+                                            }
+                                        
+                                        Text("Adjust how long the crossfade effect lasts between tracks")
+                                            .font(.caption)
+                                            .foregroundColor(.white.opacity(0.8))
+                                    }
+                                }
+                            }
+                        }
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Y2KColors.cosmic.opacity(0.5))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Y2KColors.nebula.opacity(0.2), lineWidth: 1)
+                                )
+                        )
+                        
+                        // 4. Music Sources Section
                         VStack(spacing: 16) {
                             // Header with icon and title
                             HStack(spacing: 12) {
@@ -285,7 +445,84 @@ struct SettingsView: View {
                                 )
                         )
                         
-                        // Local File Import Section
+                        // 5. Radio Stations Section
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Radio Stations")
+                                .font(.headline)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                            
+                            VStack(spacing: 12) {
+                                HStack {
+                                    Text("Total Stations")
+                                        .foregroundColor(.white)
+                                    Spacer()
+                                    Text("\(dataManager.radioStations.count)")
+                                        .foregroundColor(.white.opacity(0.8))
+                                }
+                                
+                                HStack {
+                                    Text("Favorite Stations")
+                                        .foregroundColor(.white)
+                                    Spacer()
+                                    Text("\(dataManager.radioStations.filter { $0.isFavorite }.count)")
+                                        .foregroundColor(.white.opacity(0.8))
+                                }
+                                
+                                Button(action: {
+                                    showRadioStationSheet = true
+                                }) {
+                                    HStack {
+                                        Image(systemName: "plus.circle.fill")
+                                        Text("Add Radio Station")
+                                    }
+                                    .foregroundColor(Y2KColors.neon)
+                                    .padding(.vertical, 8)
+                                    .padding(.horizontal, 12)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .fill(Y2KColors.neon.opacity(0.2))
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 8)
+                                                    .stroke(Y2KColors.neon.opacity(0.3), lineWidth: 1)
+                                            )
+                                    )
+                                }
+                                
+                                if !dataManager.radioStations.isEmpty {
+                                    Button(action: {
+                                        showRadioStationList = true
+                                    }) {
+                                        HStack {
+                                            Image(systemName: "list.bullet")
+                                            Text("Manage Stations")
+                                        }
+                                        .foregroundColor(.white)
+                                        .padding(.vertical, 8)
+                                        .padding(.horizontal, 12)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .fill(Y2KColors.cosmic)
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 8)
+                                                        .stroke(Y2KColors.nebula.opacity(0.3), lineWidth: 1)
+                                                )
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Y2KColors.cosmic.opacity(0.5))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Y2KColors.nebula.opacity(0.2), lineWidth: 1)
+                                )
+                        )
+                        
+                        // 6. Local Files Section
                         VStack(spacing: 16) {
                             // Header with icon and title
                             HStack(spacing: 12) {
@@ -473,162 +710,6 @@ struct SettingsView: View {
                             handleFileImport(result: result)
                         }
                         
-                        // Display Settings Section
-                        VStack(alignment: .leading, spacing: 16) {
-                            Text("Display")
-                                .font(.headline)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                            
-                            VStack(alignment: .leading, spacing: 12) {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    HStack {
-                                        Text("Library View")
-                                            .foregroundColor(.white)
-                                        Spacer()
-                                        Picker("Library View", selection: $dataManager.libraryViewMode) {
-                                            ForEach(UnifiedDataManager.ViewMode.allCases, id: \.self) { mode in
-                                                Text(mode.rawValue).tag(mode)
-                                            }
-                                        }
-                                        .pickerStyle(SegmentedPickerStyle())
-                                        .frame(width: 120)
-                                        .onChange(of: dataManager.libraryViewMode) { _ in
-                                            dataManager.saveViewModeSettings()
-                                        }
-                                    }
-                                    
-                                    Text("Choose how to display your music library")
-                                        .font(.caption)
-                                        .foregroundColor(.white.opacity(0.8))
-                                }
-                                
-                                VStack(alignment: .leading, spacing: 4) {
-                                    HStack {
-                                        Text("Search View")
-                                            .foregroundColor(.white)
-                                        Spacer()
-                                        Picker("Search View", selection: $dataManager.searchViewMode) {
-                                            ForEach(UnifiedDataManager.ViewMode.allCases, id: \.self) { mode in
-                                                Text(mode.rawValue).tag(mode)
-                                            }
-                                        }
-                                        .pickerStyle(SegmentedPickerStyle())
-                                        .frame(width: 120)
-                                        .onChange(of: dataManager.searchViewMode) { _ in
-                                            dataManager.saveViewModeSettings()
-                                        }
-                                    }
-                                    
-                                    Text("Choose how to display search results")
-                                        .font(.caption)
-                                        .foregroundColor(.white.opacity(0.8))
-                                }
-                            }
-                        }
-                        .padding()
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Y2KColors.cosmic.opacity(0.5))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Y2KColors.nebula.opacity(0.2), lineWidth: 1)
-                                )
-                        )
-                        
-                        // Playback Settings Section
-                        VStack(alignment: .leading, spacing: 16) {
-                            Text("Playback")
-                                .font(.headline)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                            
-                            VStack(alignment: .leading, spacing: 12) {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Toggle("Auto-play", isOn: $autoPlay)
-                                        .tint(Y2KColors.neon)
-                                        .onChange(of: autoPlay) { _ in
-                                            savePlaybackSettings()
-                                        }
-                                    
-                                    Text("Automatically start playing the next track when the current one ends")
-                                        .font(.caption)
-                                        .foregroundColor(.white.opacity(0.8))
-                                }
-                                
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Toggle("Crossfade", isOn: $crossfade)
-                                        .tint(Y2KColors.neon)
-                                        .onChange(of: crossfade) { _ in
-                                            savePlaybackSettings()
-                                        }
-                                    
-                                    Text("Smoothly blend between tracks for seamless playback")
-                                        .font(.caption)
-                                        .foregroundColor(.white.opacity(0.8))
-                                }
-                                
-                                if crossfade {
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        HStack {
-                                            Text("Crossfade Duration")
-                                                .font(.subheadline)
-                                                .fontWeight(.medium)
-                                                .foregroundColor(.white)
-                                            Spacer()
-                                            Text("\(crossfadeDuration, specifier: "%.1f")s")
-                                                .font(.subheadline)
-                                                .foregroundColor(.white.opacity(0.8))
-                                        }
-                                        
-                                        Slider(value: $crossfadeDuration, in: 1.0...8.0, step: 0.5)
-                                            .accentColor(Y2KColors.neon)
-                                            .onChange(of: crossfadeDuration) { _ in
-                                                savePlaybackSettings()
-                                            }
-                                        
-                                        Text("Adjust how long the crossfade effect lasts between tracks")
-                                            .font(.caption)
-                                            .foregroundColor(.white.opacity(0.8))
-                                    }
-                                }
-                            }
-                        }
-                        .padding()
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Y2KColors.cosmic.opacity(0.5))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Y2KColors.nebula.opacity(0.2), lineWidth: 1)
-                                )
-                        )
-                        
-                        // Notifications Section
-                        VStack(alignment: .leading, spacing: 16) {
-                            Text("Notifications")
-                                .font(.headline)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                            
-                            Toggle("Enable Notifications", isOn: $enableNotifications)
-                                .tint(Y2KColors.neon)
-                                .onChange(of: enableNotifications) { newValue in
-                                    if newValue {
-                                        requestNotificationPermission()
-                                    }
-                                }
-                        }
-                        .padding()
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Y2KColors.cosmic.opacity(0.5))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Y2KColors.nebula.opacity(0.2), lineWidth: 1)
-                                )
-                        )
-                        
                         // Downloads Section
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Offline Downloads")
@@ -750,6 +831,14 @@ struct SettingsView: View {
             }
             .onDisappear {
                 savePlaybackSettings()
+            }
+            .sheet(isPresented: $showRadioStationSheet) {
+                AddRadioStationView()
+                    .environmentObject(dataManager)
+            }
+            .sheet(isPresented: $showRadioStationList) {
+                RadioStationListView()
+                    .environmentObject(dataManager)
             }
         }
     }

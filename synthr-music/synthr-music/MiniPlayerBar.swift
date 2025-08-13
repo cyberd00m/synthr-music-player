@@ -3,6 +3,7 @@ import SwiftUI
 struct MiniPlayerBar: View {
     @EnvironmentObject var musicPlayer: MusicPlayerManager
     @EnvironmentObject var dataManager: UnifiedDataManager
+    @EnvironmentObject var networkManager: NetworkManager
     @State private var showFullPlayer = false
     
     var body: some View {

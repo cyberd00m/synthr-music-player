@@ -7,8 +7,10 @@ class UnifiedDataManager: ObservableObject {
     @Published var albums: [Album] = []
     @Published var artists: [Artist] = []
     @Published var playlists: [Playlist] = []
+    @Published var radioStations: [RadioStation] = []
     @Published var isLoading = false
     @Published var dataSource: DataSource = .local
+    @Published var homeViewMode: ViewMode = .grid
     @Published var libraryViewMode: ViewMode = .grid
     @Published var searchViewMode: ViewMode = .grid
     
@@ -36,6 +38,9 @@ class UnifiedDataManager: ObservableObject {
         
         // Load saved playlists
         loadPlaylists()
+        
+        // Load radio stations
+        loadRadioStations()
         
         // Load view mode settings
         loadViewModeSettings()
@@ -880,11 +885,17 @@ class UnifiedDataManager: ObservableObject {
     // MARK: - View Mode Settings
     
     func saveViewModeSettings() {
+        UserDefaults.standard.set(homeViewMode.rawValue, forKey: "homeViewMode")
         UserDefaults.standard.set(libraryViewMode.rawValue, forKey: "libraryViewMode")
         UserDefaults.standard.set(searchViewMode.rawValue, forKey: "searchViewMode")
     }
     
     func loadViewModeSettings() {
+        if let homeModeString = UserDefaults.standard.string(forKey: "homeViewMode"),
+           let homeMode = ViewMode(rawValue: homeModeString) {
+            homeViewMode = homeMode
+        }
+        
         if let libraryModeString = UserDefaults.standard.string(forKey: "libraryViewMode"),
            let libraryMode = ViewMode(rawValue: libraryModeString) {
             libraryViewMode = libraryMode
@@ -895,4 +906,120 @@ class UnifiedDataManager: ObservableObject {
             searchViewMode = searchMode
         }
     }
+    
+    // MARK: - Radio Station Management
+    
+    func getRadioStationsByGenre(_ genre: String) -> [RadioStation] {
+        return radioStations.filter { $0.genre == genre }
+    }
+    
+    func getAvailableGenres() -> [String] {
+        return Array(Set(radioStations.compactMap { $0.genre })).sorted()
+    }
+    
+    func addRadioStation(name: String, url: String, genre: String? = nil, description: String? = nil) {
+        let newStation = RadioStation(
+            name: name,
+            url: url,
+            genre: genre,
+            description: description
+        )
+        radioStations.append(newStation)
+        saveRadioStations()
+    }
+    
+    func deleteRadioStation(_ station: RadioStation) {
+        radioStations.removeAll { $0.id == station.id }
+        saveRadioStations()
+    }
+    
+    func updateRadioStation(_ station: RadioStation, name: String, url: String, genre: String? = nil, description: String? = nil) {
+        if let index = radioStations.firstIndex(where: { $0.id == station.id }) {
+            let updatedStation = RadioStation(
+                id: station.id,
+                name: name,
+                url: url,
+                genre: genre,
+                description: description,
+                isFavorite: station.isFavorite
+            )
+            radioStations[index] = updatedStation
+            saveRadioStations()
+        }
+    }
+    
+    func toggleRadioStationFavorite(_ station: RadioStation) {
+        if let index = radioStations.firstIndex(where: { $0.id == station.id }) {
+            let updatedStation = RadioStation(
+                id: station.id,
+                name: station.name,
+                url: station.url,
+                genre: station.genre,
+                description: station.description,
+                isFavorite: !station.isFavorite
+            )
+            radioStations[index] = updatedStation
+            saveRadioStations()
+        }
+    }
+    
+    func clearAllRadioStations() {
+        radioStations.removeAll()
+        saveRadioStations()
+        print("Cleared all radio stations")
+    }
+    
+    // MARK: - Radio Station Import/Export
+    
+    func exportRadioStations() -> String? {
+        do {
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .prettyPrinted
+            let data = try encoder.encode(radioStations)
+            return String(data: data, encoding: .utf8)
+        } catch {
+            print("Error exporting radio stations: \(error)")
+            return nil
+        }
+    }
+    
+    func importRadioStations(from jsonString: String) -> Bool {
+        guard let data = jsonString.data(using: .utf8) else {
+            print("Invalid JSON string")
+            return false
+        }
+        
+        do {
+            let importedStations = try JSONDecoder().decode([RadioStation].self, from: data)
+            radioStations = importedStations
+            saveRadioStations()
+            print("Imported \(importedStations.count) radio stations")
+            return true
+        } catch {
+            print("Error importing radio stations: \(error)")
+            return false
+        }
+    }
+    
+    private func saveRadioStations() {
+        // Save radio stations to UserDefaults for persistence
+        if let encoded = try? JSONEncoder().encode(radioStations) {
+            UserDefaults.standard.set(encoded, forKey: "savedRadioStations")
+        }
+    }
+    
+    private func loadRadioStations() {
+        // Load radio stations from UserDefaults for persistence
+        if let data = UserDefaults.standard.data(forKey: "savedRadioStations"),
+           let decoded = try? JSONDecoder().decode([RadioStation].self, from: data) {
+            radioStations = decoded
+            print("Loaded \(radioStations.count) saved radio stations")
+        } else {
+            // Start with empty radio stations if none are saved
+            radioStations = []
+            print("No saved radio stations found, starting with empty list")
+        }
+    }
+    
+
 }

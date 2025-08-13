@@ -3,8 +3,35 @@ import SwiftUI
 struct NowPlayingView: View {
     @EnvironmentObject var musicPlayer: MusicPlayerManager
     @EnvironmentObject var dataManager: UnifiedDataManager
+    @EnvironmentObject var networkManager: NetworkManager
     @Environment(\.dismiss) private var dismiss
     @State private var dragOffset: CGFloat = 0
+    
+    // Safe progress calculation to avoid NaN values
+    private var progressValue: Double {
+        let duration = musicPlayer.duration
+        let currentTime = musicPlayer.currentTime
+        
+        // Handle invalid values
+        guard duration > 0, currentTime >= 0, !duration.isNaN, !currentTime.isNaN else {
+            return 0.0
+        }
+        
+        return min(currentTime / duration, 1.0)
+    }
+    
+    // Safe remaining time calculation to avoid NaN values
+    private var remainingTime: TimeInterval {
+        let duration = musicPlayer.duration
+        let currentTime = musicPlayer.currentTime
+        
+        // Handle invalid values
+        guard duration > 0, currentTime >= 0, !duration.isNaN, !currentTime.isNaN else {
+            return 0.0
+        }
+        
+        return max(duration - currentTime, 0.0)
+    }
     @State private var isDragging = false
     @State private var showingShareSheet = false
     
@@ -16,6 +43,9 @@ struct NowPlayingView: View {
             
             // Main content with drag animation
             VStack(spacing: 0) {
+                // Offline banner at the top
+                OfflineBanner(networkManager: networkManager)
+                
                 // Drag indicator and more options button
                 HStack {
                     RoundedRectangle(cornerRadius: 2.5)
@@ -157,7 +187,7 @@ struct NowPlayingView: View {
                                 
                                 Rectangle()
                                     .fill(Color.orange)
-                                    .frame(width: geometry.size.width * CGFloat(musicPlayer.currentTime / max(musicPlayer.duration, 1)), height: 3)
+                                    .frame(width: geometry.size.width * CGFloat(progressValue), height: 3)
                                     .cornerRadius(1.5)
                             }
                         }
@@ -172,7 +202,7 @@ struct NowPlayingView: View {
                             
                             Spacer()
                             
-                            Text("-\(formatTime(musicPlayer.duration - musicPlayer.currentTime))")
+                            Text("-\(formatTime(remainingTime))")
                                 .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(.white.opacity(0.8))
                         }
@@ -374,7 +404,7 @@ struct ProgressView: View {
                     get: { musicPlayer.currentTime },
                     set: { musicPlayer.seek(to: $0) }
                 ),
-                in: 0...max(musicPlayer.duration, 1)
+                in: 0...max(musicPlayer.duration, 0.1)
             )
             .accentColor(Y2KColors.neon)
             .padding(.horizontal)
@@ -397,6 +427,11 @@ struct ProgressView: View {
     }
     
     private func formatTime(_ time: TimeInterval) -> String {
+        // Handle invalid values
+        guard time >= 0, !time.isNaN, !time.isInfinite else {
+            return "0:00"
+        }
+        
         let minutes = Int(time) / 60
         let seconds = Int(time) % 60
         return String(format: "%d:%02d", minutes, seconds)

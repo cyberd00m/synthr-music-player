@@ -6,6 +6,10 @@ struct SearchView: View {
     @EnvironmentObject var downloadManager: DownloadManager
     @State private var searchText = ""
     @State private var searchResults: [Track] = []
+    @State private var showPlaylistSheet = false
+    @State private var selectedTrack: Track?
+    @State private var selectedTracks: [Track] = []
+    @State private var selectedAlbum: Album?
     
     var body: some View {
         NavigationView {
@@ -51,11 +55,19 @@ struct SearchView: View {
                 
                 // Search results
                 if searchText.isEmpty {
-                    RecentSearchesView()
+                    RecentSearchesView(onAddAlbumToPlaylist: { album in
+                        selectedTracks = album.tracks
+                        selectedAlbum = album
+                        showPlaylistSheet = true
+                    })
                 } else if searchResults.isEmpty {
                     NoResultsView()
                 } else {
-                    SearchResultsView(results: searchResults)
+                    SearchResultsView(results: searchResults, onAddTrackToPlaylist: { track in
+                        selectedTracks = [track]
+                        selectedAlbum = nil
+                        showPlaylistSheet = true
+                    })
                 }
                 
                 Spacer()
@@ -68,6 +80,10 @@ struct SearchView: View {
                         .environmentObject(downloadManager)
                 }
             }
+            .sheet(isPresented: $showPlaylistSheet) {
+                PlaylistSelectionSheet(tracks: selectedTracks, album: selectedAlbum)
+                    .environmentObject(dataManager)
+            }
         }
         .background(
             LinearGradient(
@@ -77,9 +93,18 @@ struct SearchView: View {
             )
         )
     }
+    
+    private func createAddToPlaylistClosure(for album: Album) -> () -> Void {
+        return {
+            self.selectedTracks = album.tracks
+            self.selectedAlbum = album
+            self.showPlaylistSheet = true
+        }
+    }
 }
 
 struct RecentSearchesView: View {
+    let onAddAlbumToPlaylist: (Album) -> Void
     @EnvironmentObject var dataManager: UnifiedDataManager
     @EnvironmentObject var musicPlayer: MusicPlayerManager
     @EnvironmentObject var downloadManager: DownloadManager
@@ -96,7 +121,7 @@ struct RecentSearchesView: View {
             ScrollView {
                 LazyVStack(spacing: 8) {
                     ForEach(dataManager.albums.prefix(3)) { album in
-                        RecentSearchCard(album: album)
+                        RecentSearchCard(album: album, onAddToPlaylist: { onAddAlbumToPlaylist(album) })
                             .onTapGesture {
                                 musicPlayer.setQueue(album.tracks)
                             }
@@ -113,6 +138,7 @@ struct RecentSearchesView: View {
 
 struct RecentSearchCard: View {
     let album: Album
+    let onAddToPlaylist: () -> Void
     @EnvironmentObject var downloadManager: DownloadManager
     
     var body: some View {
@@ -175,6 +201,7 @@ struct RecentSearchCard: View {
 
 struct SearchResultsView: View {
     let results: [Track]
+    let onAddTrackToPlaylist: (Track) -> Void
     @EnvironmentObject var musicPlayer: MusicPlayerManager
     @EnvironmentObject var downloadManager: DownloadManager
     @EnvironmentObject var dataManager: UnifiedDataManager
@@ -187,7 +214,7 @@ struct SearchResultsView: View {
                     GridItem(.flexible())
                 ], spacing: 20) {
                     ForEach(results) { track in
-                        TrackGridCard(track: track)
+                        TrackGridCard(track: track, onAddToPlaylist: { onAddTrackToPlaylist(track) })
                             .onTapGesture {
                                 musicPlayer.setQueue([track])
                                 musicPlayer.play()
@@ -201,7 +228,7 @@ struct SearchResultsView: View {
             }
         } else {
             List(results) { track in
-                TrackRowView(track: track)
+                TrackRowView(track: track, onAddToPlaylist: { onAddTrackToPlaylist(track) })
                     .onTapGesture {
                         musicPlayer.setQueue([track])
                         musicPlayer.play()
@@ -221,6 +248,7 @@ struct SearchResultsView: View {
 
 struct TrackRowView: View {
     let track: Track
+    let onAddToPlaylist: () -> Void
     @EnvironmentObject var downloadManager: DownloadManager
     
     var body: some View {
@@ -276,6 +304,7 @@ struct TrackRowView: View {
 
 struct TrackGridCard: View {
     let track: Track
+    let onAddToPlaylist: () -> Void
     @EnvironmentObject var downloadManager: DownloadManager
     
     var body: some View {
