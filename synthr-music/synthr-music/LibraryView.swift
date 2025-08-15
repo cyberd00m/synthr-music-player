@@ -393,7 +393,7 @@ struct LibraryListView: View {
     
     var body: some View {
         ScrollView {
-            if dataManager.searchViewMode == .grid {
+            if dataManager.libraryViewMode == .grid {
                 LazyVGrid(columns: [
                     GridItem(.flexible()),
                     GridItem(.flexible())

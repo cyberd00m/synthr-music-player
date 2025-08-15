@@ -11,102 +11,101 @@ struct PlaylistDetailView: View {
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 0) {
-                // Playlist Header Section
-                VStack(spacing: 20) {
-                    // Large Playlist Artwork
-                    PlaylistArtworkView(playlist: playlist)
-                        .frame(width: 280, height: 280)
-                    
-                    // Playlist Information
-                    VStack(spacing: 8) {
-                        Text(playlist.name)
-                            .font(.monospacedTitle)
-                            .fontWeight(.bold)
-                            .foregroundColor(.white)
-                            .multilineTextAlignment(.center)
+            ScrollView {
+                VStack(spacing: 0) {
+                    // Playlist Header Section
+                    VStack(spacing: 20) {
+                        // Large Playlist Artwork
+                        PlaylistArtworkView(playlist: playlist)
+                            .frame(width: 280, height: 280)
                         
-                        Text("\(playlist.trackCount) songs • edited \(formatDate(playlist.createdAt))")
-                            .font(.monospacedSubheadline)
-                            .foregroundColor(.white.opacity(0.8))
-                    }
-                    
-                    // Playback Controls
-                    HStack(spacing: 30) {
-                        // Download Button
-                        Button(action: {
-                            // TODO: Implement download functionality
-                        }) {
-                            Image(systemName: "arrow.down.circle.fill")
+                        // Playlist Information
+                        VStack(spacing: 8) {
+                            Text(playlist.name)
                                 .font(.monospacedTitle)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                                .multilineTextAlignment(.center)
+                            
+                            Text("\(playlist.trackCount) songs • edited \(formatDate(playlist.createdAt))")
+                                .font(.monospacedSubheadline)
                                 .foregroundColor(.white.opacity(0.8))
-                                .frame(width: 44, height: 44)
-                                .background(
-                                    Circle()
-                                        .fill(Color(red: 0.3, green: 0.3, blue: 0.3))
-                                )
                         }
                         
-                        // Play Button
-                        Button(action: {
-                            if !playlist.tracks.isEmpty {
-                                musicPlayer.setQueue(playlist.tracks)
-                                musicPlayer.play()
+                        // Playback Controls
+                        HStack(spacing: 30) {
+                            // Download Button
+                            Button(action: {
+                                // TODO: Implement download functionality
+                            }) {
+                                Image(systemName: "arrow.down.circle.fill")
+                                    .font(.monospacedTitle)
+                                    .foregroundColor(.white.opacity(0.8))
+                                    .frame(width: 44, height: 44)
+                                    .background(
+                                        Circle()
+                                            .fill(Color(red: 0.3, green: 0.3, blue: 0.3))
+                                    )
                             }
-                        }) {
-                            Image(systemName: "play.fill")
-                                .font(.monospacedTitle2)
-                                .foregroundColor(.black)
-                                .frame(width: 60, height: 60)
-                                .background(
-                                    Circle()
-                                        .fill(.white)
-                                )
+                            
+                            // Play Button
+                            Button(action: {
+                                if !playlist.tracks.isEmpty {
+                                    musicPlayer.setQueue(playlist.tracks)
+                                    musicPlayer.play()
+                                }
+                            }) {
+                                Image(systemName: "play.fill")
+                                    .font(.monospacedTitle2)
+                                    .foregroundColor(.black)
+                                    .frame(width: 60, height: 60)
+                                    .background(
+                                        Circle()
+                                            .fill(.white)
+                                    )
+                            }
+                            .disabled(playlist.tracks.isEmpty)
+                            
+                            // Shuffle Button
+                            Button(action: {
+                                if !playlist.tracks.isEmpty {
+                                    musicPlayer.setQueue(playlist.tracks.shuffled())
+                                    musicPlayer.play()
+                                }
+                            }) {
+                                Image(systemName: "shuffle")
+                                    .font(.monospacedTitle)
+                                    .foregroundColor(.white.opacity(0.8))
+                                    .frame(width: 44, height: 44)
+                                    .background(
+                                        Circle()
+                                            .fill(Color(red: 0.3, green: 0.3, blue: 0.3))
+                                    )
+                            }
+                            .disabled(playlist.tracks.isEmpty)
                         }
-                        .disabled(playlist.tracks.isEmpty)
-                        
-                        // Shuffle Button
-                        Button(action: {
-                            if !playlist.tracks.isEmpty {
-                                musicPlayer.setQueue(playlist.tracks.shuffled())
-                                musicPlayer.play()
-                            }
-                        }) {
-                            Image(systemName: "shuffle")
-                                .font(.monospacedTitle)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 20)
+                    
+                    // Tracks List
+                    if playlist.tracks.isEmpty {
+                        VStack(spacing: 16) {
+                            Image(systemName: "music.note.list")
+                                .font(.monospacedSystem(size: 60))
+                                .foregroundColor(.white.opacity(0.6))
+                            
+                            Text("No tracks in this playlist")
+                                .font(.monospacedTitle3)
+                                .fontWeight(.medium)
+                                .foregroundColor(.white)
+                            
+                            Text("Add some tracks to get started")
+                                .font(.monospacedBody)
                                 .foregroundColor(.white.opacity(0.8))
-                                .frame(width: 44, height: 44)
-                                .background(
-                                    Circle()
-                                        .fill(Color(red: 0.3, green: 0.3, blue: 0.3))
-                                )
                         }
-                        .disabled(playlist.tracks.isEmpty)
-                    }
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
-                
-                // Tracks List
-                if playlist.tracks.isEmpty {
-                    Spacer()
-                    VStack(spacing: 16) {
-                        Image(systemName: "music.note.list")
-                            .font(.monospacedSystem(size: 60))
-                            .foregroundColor(.white.opacity(0.6))
-                        
-                        Text("No tracks in this playlist")
-                            .font(.monospacedTitle3)
-                            .fontWeight(.medium)
-                            .foregroundColor(.white)
-                        
-                        Text("Add some tracks to get started")
-                            .font(.monospacedBody)
-                            .foregroundColor(.white.opacity(0.8))
-                    }
-                    Spacer()
-                } else {
-                    ScrollView {
+                        .padding(.top, 40)
+                    } else {
                         LazyVStack(spacing: 0) {
                             ForEach(Array(playlist.tracks.enumerated()), id: \.element.id) { index, track in
                                 TrackRow(
@@ -129,6 +128,7 @@ struct PlaylistDetailView: View {
                         }
                         .padding(.horizontal, 16)
                         .padding(.top, 20)
+                        .padding(.bottom, 20)
                     }
                 }
             }
